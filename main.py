@@ -4,7 +4,7 @@ from tkinter import Tk
 
 commands = {
     "<Left>"    : lambda e: [mergeNumbersLeft(), showBoard()] ,
-    "<Down>"    : lambda e: [mergeNumbersDown, showBoard()],
+    "<Down>"    : lambda e: [mergeNumbersDown(), showBoard()],
     "<Right>"   : lambda e: [mergeNumbersRight(), showBoard()],
     "<Up>"      : lambda e: [mergeNumbersUp(), showBoard()],
 
@@ -30,7 +30,7 @@ def addNumberToBoard():
 		if board[x][y] == 0:
 			break
 
-		board[x][y] = 2
+	board[x][y] = 2
 
 def showBoard():
     print("\033[H\033[J", end="")
@@ -73,7 +73,6 @@ def mergeNumbersRight():
 
 if __name__=="__main__":
     root = Tk()
-    root.withdraw()
     for command in commands.keys():
         root.bind(command, commands[command])
 
@@ -85,5 +84,6 @@ if __name__=="__main__":
     showBoard()
 
     # don't show the tk window
+    root.withdraw()
     root.mainloop()
 
