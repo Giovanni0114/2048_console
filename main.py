@@ -35,17 +35,18 @@ def addNumberToBoard():
 	board[x][y] = 2
 
 def showBoard():
-	if not DEBUG:
-		print("\033[H\033[J", end="")
-
-	print("---------")
-	for i in board:
-		print("|" + "|".join([str(x) for x in i]) + "|")
-		print("---------")
 	if GUI:
 		for i in range(SIZE):
 			for j in range(SIZE):
 				labels[i][j].config(text = str(board[i][j]))
+	else:
+		if not DEBUG:
+			print("\033[H\033[J", end="")
+
+		print("-"*(SIZE*2+1))
+		for i in board:
+			print("|" + "|".join(["%04s"%x for x in i]) + "|")
+			print("-"*(SIZE*5+1))
 
 
 def _merge(board):
@@ -71,7 +72,6 @@ def _slip(array, start):
 		array[q] = array[q+1] 
 	array[-1] = 0
 	return array 
-
 
 def mergeNumbersUp():
 	global board
@@ -134,12 +134,12 @@ def createBoard():
 if __name__=="__main__":
 	if len(argv) > 1:
 		if "debug" in argv:
-			# Disable clearing console
 			DEBUG = True
+
 		if "gui" in argv:
 			GUI = True
 		
-		elif argv[1] == "--size" or argv[1] == "-s":
+		if argv[1] == "--size" or argv[1] == "-s":
 			_s = int(argv[2])
 			if _s >= 4 and _s <= 8:
 				SIZE = _s
@@ -156,18 +156,14 @@ if __name__=="__main__":
 		for i in range(SIZE):
 			labels.append([])
 			for j in range(SIZE):
-				var = tkinter.Label(root, text="0", padx=10, pady=10, justify="center")
-				labels[-1].append(var)
-				# labels[-1][-1].pack()
+				labels[-1].append(tkinter.Label(root, text="0", padx=10, pady=10, justify="center"))
 				labels[-1][-1].grid(row=i, column=j)
 	else:
 		root.withdraw()
-
 
 	addNumberToBoard()
 	addNumberToBoard()
 
 	showBoard()
-	# don't show the tk window
 
 	root.mainloop()
