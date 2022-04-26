@@ -1,16 +1,16 @@
 from random import randint
-from tkinter import Tk
+import tkinter
 from sys import argv
 
-
+GUI = False
 DEBUG = False
 SIZE = 4
 
 commands = {
-	"<Left>"	: lambda e: [mergeNumbersLeft(), showBoard()] ,
-	"<Down>"	: lambda e: [mergeNumbersDown(), showBoard()],
-	"<Right>"   : lambda e: [mergeNumbersRight(), showBoard()],
-	"<Up>"	  : lambda e: [mergeNumbersUp(), showBoard()],
+	"<Left>"	: lambda e: [mergeNumbersLeft(), showBoard(), addNumberToBoard()] ,
+	"<Down>"	: lambda e: [mergeNumbersDown(), showBoard(), addNumberToBoard()],
+	"<Right>"   : lambda e: [mergeNumbersRight(), showBoard(), addNumberToBoard()],
+	"<Up>"	  : lambda e: [mergeNumbersUp(), showBoard(), addNumberToBoard()],
 
 	#----------------------------------------------------------------
 	
@@ -21,6 +21,9 @@ commands = {
 _startingBoard =  [[]]
 
 board = [[]]
+
+labels = []
+
 
 def addNumberToBoard():
 	global board
@@ -39,6 +42,10 @@ def showBoard():
 	for i in board:
 		print("|" + "|".join([str(x) for x in i]) + "|")
 		print("---------")
+	if GUI:
+		for i in range(SIZE):
+			for j in range(SIZE):
+				labels[i][j].config(text = str(board[i][j]))
 
 
 def _merge(board):
@@ -126,9 +133,12 @@ def createBoard():
 
 if __name__=="__main__":
 	if len(argv) > 1:
-		if argv[1] == "debug":
+		if "debug" in argv:
 			# Disable clearing console
 			DEBUG = True
+		if "gui" in argv:
+			GUI = True
+		
 		elif argv[1] == "--size" or argv[1] == "-s":
 			_s = int(argv[2])
 			if _s >= 4 and _s <= 8:
@@ -136,18 +146,28 @@ if __name__=="__main__":
 
 	createBoard()
 
-	root = Tk()
+	root = tkinter.Tk()
 	for command in commands.keys():
 		root.bind(command, commands[command])
 
-	print( "Press any arrow to play the game (Escape to exit):" )
-	
+	if GUI:
+		root.title = f"2048 - {SIZE}x{SIZE}"
+		root.geometry(f"{SIZE*50}x{SIZE*50}")
+		for i in range(SIZE):
+			labels.append([])
+			for j in range(SIZE):
+				var = tkinter.Label(root, text="0", padx=10, pady=10, justify="center")
+				labels[-1].append(var)
+				# labels[-1][-1].pack()
+				labels[-1][-1].grid(row=i, column=j)
+	else:
+		root.withdraw()
+
+
 	addNumberToBoard()
 	addNumberToBoard()
-	board[0] = [0,2,2,4]
 
 	showBoard()
-
 	# don't show the tk window
-	# root.withdraw()
+
 	root.mainloop()
