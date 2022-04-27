@@ -1,38 +1,41 @@
 from random import randint
 import tkinter
 from sys import argv
+import argparse
+
 
 GUI = False
 DEBUG = False
 SIZE = 4
 
 commands = {
-	"<Left>"	: lambda e: [mergeNumbersLeft(), showBoard(), addNumberToBoard()] ,
-	"<Down>"	: lambda e: [mergeNumbersDown(), showBoard(), addNumberToBoard()],
-	"<Right>"   : lambda e: [mergeNumbersRight(), showBoard(), addNumberToBoard()],
-	"<Up>"	  : lambda e: [mergeNumbersUp(), showBoard(), addNumberToBoard()],
-
+	"<Left>"	: lambda e: mergeNumbersLeft(),
+	"<Down>"	: lambda e: mergeNumbersDown(),
+	"<Right>"   : lambda e: mergeNumbersRight(),
+	"<Up>"	  	: lambda e: mergeNumbersUp(),
 	#----------------------------------------------------------------
-	
-	"<r>"	   : lambda e: [restart(), showBoard()],
-	"<Escape>"  : lambda e: root.destroy()
+	"<r>"	   	: lambda e: restart(),
+	"<Escape>"  : lambda e: root.destroy(), 
+
+	"<KeyRelease>"	: lambda e: showBoard()
 }
 
-_startingBoard =  [[]]
+
 
 board = [[]]
-
 labels = []
 
 
 def addNumberToBoard():
 	global board
-	while True:
-		x,y = randint(0,SIZE-1),randint(0,SIZE-1)
-		if board[x][y] == 0:
-			break
+	free = []
+	for x in range(SIZE):
+		for y in range(SIZE):
+			if board[x][y] == 0:
+				free.append((x,y))
 
-	board[x][y] = 2
+	num = randint(0, len(free)-1)
+	board[free[num][0]] [free[num][1]] = 2
 
 def showBoard():
 	if GUI:
@@ -43,13 +46,15 @@ def showBoard():
 		if not DEBUG:
 			print("\033[H\033[J", end="")
 
-		print("-"*(SIZE*2+1))
+		print("-"*(SIZE*5+1))
 		for i in board:
 			print("|" + "|".join(["%04s"%x for x in i]) + "|")
 			print("-"*(SIZE*5+1))
 
 
 def _merge(board):
+	changed = False
+
 	for l in range(SIZE):
 		line = board[l]
 		cur = -1
@@ -64,8 +69,11 @@ def _merge(board):
 				pass
 			else:
 				cur = line[i]
+		if board[l] != line:
+			changed = True
+
 		board[l] = line
-	return board
+	return board, changed
 
 def _slip(array, start):
 	for q in range(start, SIZE-1):
@@ -79,7 +87,7 @@ def mergeNumbersUp():
 	for i in range(SIZE):
 		_arr.append([])
 		_arr[-1] = [x[i] for x in board]
-	_arr = _merge(_arr)
+	_arr, chang = _merge(_arr)
 
 	_arr2 = []
 	for i in range(SIZE):
@@ -88,9 +96,15 @@ def mergeNumbersUp():
 
 	board = _arr2
 
+	if chang:
+		addNumberToBoard()
+
 def mergeNumbersLeft():
 	global board
-	board = _merge(board)
+	board, chang = _merge(board)
+	
+	if chang:
+		addNumberToBoard()
 
 def mergeNumbersDown():
 	global board
@@ -98,7 +112,9 @@ def mergeNumbersDown():
 	for i in range(SIZE):
 		_arr.append([])
 		_arr[-1] = [x[i] for x in board][::-1]
-	_arr = _merge(_arr)
+	_arr, chang = _merge(_arr)
+	
+	
 	_arr = [i[::-1] for i in _arr]
 	_arr2 = []
 	for i in range(SIZE):
@@ -107,44 +123,64 @@ def mergeNumbersDown():
 
 	board = _arr2
 
+	if chang:
+		addNumberToBoard()
+
 def mergeNumbersRight():
 	global board
-	_arr = _merge([i[::-1] for i in board])
+	_arr, chang = _merge([i[::-1] for i in board])
 	board = [i[::-1] for i in _arr]
+	
+	if chang:
+		addNumberToBoard()
 
 
 def restart():
 	global board
-	board = _startingBoard
-	addNumberToBoard()
-	addNumberToBoard()
+	
+	createBoard()
+
 
 def createBoard():
-	global _startingBoard
 	global board
 
-	for _ in range(SIZE):_startingBoard[0].append(0)
+	board = [[]]
+
+	for _ in range(SIZE):
+		board[0].append(0)
+	
 	for _ in range(SIZE-1):
-		_startingBoard.append([])
-		_startingBoard[-1].extend(_startingBoard[0])
+		board.append([])
+		board[-1].extend(board[0])
 
-	board = _startingBoard
+	addNumberToBoard()
+	addNumberToBoard()
+
+	showBoard()
 
 
-if __name__=="__main__":
-	if len(argv) > 1:
-		if "debug" in argv:
-			DEBUG = True
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="Simple impementation of 2048 game")
 
-		if "gui" in argv:
-			GUI = True
-		
-		if argv[1] == "--size" or argv[1] == "-s":
-			_s = int(argv[2])
-			if _s >= 4 and _s <= 8:
-				SIZE = _s
+	parser.add_argument("-g", "--gui", 
+						help="Runs game in window mode",
+						action="store_true")
 
-	createBoard()
+	parser.add_argument("-d", "--debug",
+						help="(Don't work with 'gui' argument) Prevent program from clearing console output",
+						action="store_true")
+
+	parser.add_argument("-s", "--size",
+						help="Set size of game board. Must be between 4 and 8. (Default 4)", 
+						default=4)
+
+	args = parser.parse_args()
+
+	if args.debug: DEBUG = True
+	if args.gui: GUI = True
+
+	SIZE = int(args.size)
+	if SIZE > 8 or SIZE < 4: raise ValueError
 
 	root = tkinter.Tk()
 	for command in commands.keys():
@@ -160,10 +196,8 @@ if __name__=="__main__":
 				labels[-1][-1].grid(row=i, column=j)
 	else:
 		root.withdraw()
+		showBoard()
 
-	addNumberToBoard()
-	addNumberToBoard()
-
-	showBoard()
+	createBoard()
 
 	root.mainloop()
